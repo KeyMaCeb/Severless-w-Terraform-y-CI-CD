@@ -1,0 +1,18 @@
+# Backend (Java/Maven)
+backend/target/
+backend/.idea/
+backend/*.iml
+backend/.mvn/
+!backend/.mvn/wrapper/maven-wrapper.jar
+
+# Mobile (Flutter)
+mobile/build/
+mobile/.dart_tool/
+mobile/.idea/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/ios/Flutter/.last_build_id
+
+# Generales
+.DS_Store
+*.log
