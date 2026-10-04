@@ -1,18 +1,34 @@
-# Backend (Java/Maven)
-backend/target/
-backend/.idea/
-backend/*.iml
-backend/.mvn/
-!backend/.mvn/wrapper/maven-wrapper.jar
+# =========================
+# Backend - Spring Boot
+# =========================
+api_backend/api_backend/target/
+api_backend/api_backend/.mvn/
+api_backend/api_backend/dependency-reduced-pom.xml
 
-# Mobile (Flutter)
-mobile/build/
-mobile/.dart_tool/
-mobile/.idea/
-mobile/android/.gradle/
-mobile/android/local.properties
-mobile/ios/Flutter/.last_build_id
+# IntelliJ IDEA
+api_backend/.idea/
+api_backend/api_backend/.idea/
+*.iml
+.idea/
 
+# =========================
+# Secrets / Environment
+# =========================
+.env
+*.env
+
+# =========================
+# Flutter
+# =========================
+appkc/build/
+appkc/.dart_tool/
+appkc/.idea/
+appkc/android/.gradle/
+appkc/android/local.properties
+appkc/ios/Flutter/.last_build_id
+
+# =========================
 # Generales
+# =========================
 .DS_Store
 *.log

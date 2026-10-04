@@ -1,12 +1,15 @@
 package com.keysi.api_backend.domain.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Usuario {
     private Long id;
     private String nombre;
     private String email;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
     private String fotoUrl;
 
     public Usuario() {
@@ -44,7 +47,6 @@ public class Usuario {
         this.email = email;
     }
 
-    @JsonIgnore
     public String getPassword() {
         return password;
     }
