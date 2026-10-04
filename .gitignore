@@ -22,6 +22,7 @@ api_backend/api_backend/.env
 .idea/
 *.iml
 .vscode/
+api_backend/.idea/
 
 # =========================
 # Flutter
