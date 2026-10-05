@@ -68,3 +68,7 @@ jobs:
       - name: Terraform Plan
         working-directory: api_backend/api_backend/terraform
         run: terraform plan
+
+      - name: Terraform Apply
+        working-directory: api_backend/api_backend/terraform
+        run: terraform apply -auto-approve
