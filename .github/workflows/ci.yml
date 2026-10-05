@@ -1,4 +1,4 @@
-name: CI - Backend
+name: CI/CD - Backend
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
 
 jobs:
   build:
+    name: Build Backend
     runs-on: ubuntu-latest
 
     steps:
@@ -27,3 +28,23 @@ jobs:
       - name: Build backend
         working-directory: api_backend/api_backend
         run: mvn clean package -DskipTests
+
+  terraform:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: api_backend/api_backend/terraform
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: api_backend/api_backend/terraform
+        run: terraform validate
