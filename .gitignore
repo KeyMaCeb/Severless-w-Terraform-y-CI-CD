@@ -32,3 +32,8 @@ appkc/ios/Flutter/.last_build_id
 # =========================
 .DS_Store
 *.log
+# Terraform - valores sensibles
+api_backend/api_backend/terraform/terraform.tfvars
+api_backend/api_backend/terraform/.terraform/
+api_backend/api_backend/terraform/*.tfstate
+api_backend/api_backend/terraform/*.tfstate.*

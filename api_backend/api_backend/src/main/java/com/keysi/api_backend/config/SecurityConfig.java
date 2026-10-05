@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/usuarios/**").permitAll()
                         .requestMatchers("/files/**").permitAll()
+                        .requestMatchers("/upload/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
