@@ -52,6 +52,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Verify AWS account and Terraform state
+        run: |
+          aws sts get-caller-identity
+          aws s3 ls s3://api-backend-terraform-state-750390205856/api-backend/
+
       - name: Terraform Init
         working-directory: api_backend/api_backend/terraform
         run: terraform init
