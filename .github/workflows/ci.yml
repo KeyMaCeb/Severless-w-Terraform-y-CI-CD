@@ -29,6 +29,10 @@ jobs:
         working-directory: api_backend/api_backend
         run: mvn clean package -DskipTests
 
+      - name: List generated JARs
+        working-directory: api_backend/api_backend
+        run: ls -lah target/
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
