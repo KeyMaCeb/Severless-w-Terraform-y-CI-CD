@@ -1,0 +1,29 @@
+name: CI - Backend
+
+on:
+  push:
+    branches:
+      - main
+      - feature/aws-lambda
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build backend
+        working-directory: api_backend/api_backend
+        run: mvn clean package -DskipTests
