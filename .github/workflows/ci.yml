@@ -61,6 +61,10 @@ jobs:
         working-directory: api_backend/api_backend/terraform
         run: terraform init
 
+      - name: Verify Terraform state
+        working-directory: api_backend/api_backend/terraform
+        run: terraform state list
+
       - name: Terraform Plan
         working-directory: api_backend/api_backend/terraform
         run: terraform plan
