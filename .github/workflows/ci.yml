@@ -10,9 +10,16 @@ on:
       - main
 
 jobs:
-  build-and-validate:
-    name: Build Backend and Validate Terraform
+  build-and-deploy:
+    name: Build and Deploy Backend
     runs-on: ubuntu-latest
+
+    env:
+      TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+      TF_VAR_database_url: ${{ secrets.DATABASE_URL }}
+      TF_VAR_database_username: ${{ secrets.DATABASE_USERNAME }}
+      TF_VAR_database_password: ${{ secrets.DATABASE_PASSWORD }}
+      TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
 
     steps:
       - name: Checkout
@@ -32,18 +39,23 @@ jobs:
       - name: Verify Lambda JAR
         working-directory: api_backend/api_backend
         run: |
-          echo "Contenido de target:"
-          ls -lah target/
           test -f target/api_backend-0.0.1-SNAPSHOT-shaded.jar
           echo "Lambda JAR encontrado correctamente."
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Terraform Init
         working-directory: api_backend/api_backend/terraform
         run: terraform init
 
-      - name: Terraform Validate
+      - name: Terraform Plan
         working-directory: api_backend/api_backend/terraform
-        run: terraform validate
+        run: terraform plan
