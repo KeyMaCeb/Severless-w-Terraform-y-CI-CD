@@ -29,9 +29,13 @@ jobs:
         working-directory: api_backend/api_backend
         run: mvn clean package -DskipTests
 
-      - name: List generated JARs
+      - name: Verify Lambda JAR
         working-directory: api_backend/api_backend
-        run: ls -lah target/
+        run: |
+          echo "Contenido de target:"
+          ls -lah target/
+          test -f target/api_backend-0.0.1-SNAPSHOT-shaded.jar
+          echo "Lambda JAR encontrado correctamente."
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
