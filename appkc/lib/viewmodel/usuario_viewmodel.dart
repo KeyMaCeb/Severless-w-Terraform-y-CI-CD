@@ -66,4 +66,10 @@ class UsuarioViewModel extends ChangeNotifier {
     }
     return ok;
   }
+
+    int fotoVersion = 0; // cambia después de cada subida para evitar caché
+    Future<bool> recargarTrasSubida() {
+    fotoVersion = DateTime.now().millisecondsSinceEpoch;
+    return cargar();
+  }
 }

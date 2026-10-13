@@ -31,6 +31,10 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
     super.initState();
     _nombreCtrl = TextEditingController(text: widget.usuario?.nombre ?? '');
     _emailCtrl = TextEditingController(text: widget.usuario?.email ?? '');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    context.read<UploadViewModel>().reset();
+  });
   }
 
   @override
@@ -64,24 +68,31 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
 }
 
   Future<void> _subirImagen() async {
-    if (_archivoSeleccionado == null || widget.usuario?.id == null) return;
-
-    final uploadVm = context.read<UploadViewModel>();
-    final ok = await uploadVm.subir(_archivoSeleccionado!, widget.usuario!.id!);
-
-    if (!mounted) return;
-    if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Imagen subida correctamente')),
-      );
-      context.read<UsuarioViewModel>().cargar();
-      setState(() => _archivoSeleccionado = null);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(uploadVm.error ?? 'Error al subir')),
-      );
-    }
+  debugPrint('SUBIR: archivo=${_archivoSeleccionado?.path} id=${widget.usuario?.id}');
+  if (_archivoSeleccionado == null || widget.usuario?.id == null) {
+    debugPrint('SUBIR: cancelado, falta archivo o id');
+    return;
   }
+
+  final uploadVm = context.read<UploadViewModel>();
+  final ok = await uploadVm.subir(_archivoSeleccionado!, widget.usuario!.id!);
+  debugPrint('SUBIR: ok=$ok url=${uploadVm.urlSubida} error=${uploadVm.error}');
+
+  if (!mounted) return;
+  if (ok) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Imagen subida correctamente')),
+    );
+    final usuarioVm = context.read<UsuarioViewModel>();
+    await usuarioVm.recargarTrasSubida();
+    if (!mounted) return;
+    setState(() => _archivoSeleccionado = null);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(uploadVm.error ?? 'Error al subir')),
+    );
+  }
+}
 
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
@@ -105,14 +116,60 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
     }
   }
 
-  Widget _previewFoto() {
+  Usuario? _usuarioActual(UsuarioViewModel vm) {
+    final id = widget.usuario?.id;
+    if (id == null) return widget.usuario;
+    return vm.usuarios.firstWhere(
+      (u) => u.id == id,
+      orElse: () => widget.usuario!,
+    );
+  }
+
+    Widget _previewFoto(Usuario? usuario, int version) {
     if (_archivoSeleccionado != null) {
-      return Image.file(_archivoSeleccionado!, height: 150, fit: BoxFit.cover);
+      return Image.file(
+        _archivoSeleccionado!,
+        height: 150,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
     }
-    if (widget.usuario?.fotoUrl != null) {
-      final url = '${ApiClient.dio.options.baseUrl}${widget.usuario!.fotoUrl}';
-      return Image.network(url, height: 150, fit: BoxFit.cover);
+
+    final fotoUrl = context.read<UploadViewModel>().urlSubida ?? usuario?.fotoUrl;
+
+    if (fotoUrl != null && fotoUrl.isNotEmpty) {
+      final uri = Uri.parse(fotoUrl);
+      final base = uri.hasScheme
+          ? uri
+          : Uri.parse(ApiClient.dio.options.baseUrl).resolve(fotoUrl);
+
+      // ?v=... fuerza a Flutter a descargar la imagen nueva
+      final url = base.replace(queryParameters: {
+        ...base.queryParameters,
+        'v': '$version',
+      }).toString();
+
+      debugPrint('FOTO URL FINAL: $url');
+
+      return Image.network(
+        url,
+        key: ValueKey(url),
+        height: 150,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, progress) => progress == null
+            ? child
+            : const SizedBox(
+                height: 150,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+        errorBuilder: (context, error, stackTrace) => const SizedBox(
+          height: 150,
+          child: Center(child: Icon(Icons.broken_image, size: 50)),
+        ),
+      );
     }
+
     return Container(
       height: 150,
       color: Colors.grey.shade200,
@@ -122,8 +179,10 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loading = context.watch<UsuarioViewModel>().loading;
+    final usuarioVm = context.watch<UsuarioViewModel>();   // <-- watch al VM
+    final loading = usuarioVm.loading;
     final uploadVm = context.watch<UploadViewModel>();
+    final usuario = _usuarioActual(usuarioVm);
 
     return Scaffold(
       appBar: AppBar(title: Text(_esEdicion ? 'Editar usuario' : 'Nuevo usuario')),
@@ -135,7 +194,7 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: _previewFoto(),
+                child: _previewFoto(usuario, usuarioVm.fotoVersion),
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(

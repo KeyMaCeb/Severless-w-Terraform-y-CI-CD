@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
   static final Dio dio = Dio(BaseOptions(
-    baseUrl: "http://10.0.2.2:8080", // 10.0.2.2 = localhost de tu PC visto desde el emulador
+    baseUrl: "https://0edeq9hg51.execute-api.us-east-2.amazonaws.com", // 10.0.2.2 = localhost de tu PC visto desde el emulador
     connectTimeout: const Duration(seconds: 10),
   ));
 

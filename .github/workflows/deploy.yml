@@ -20,6 +20,7 @@ jobs:
       TF_VAR_database_username: ${{ secrets.DATABASE_USERNAME }}
       TF_VAR_database_password: ${{ secrets.DATABASE_PASSWORD }}
       TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+      TF_VAR_sender_email: ${{ secrets.SENDER_EMAIL }}
 
     steps:
       - name: Checkout
@@ -32,9 +33,17 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Install dependencies
+        working-directory: api_backend/api_backend
+        run: mvn -B dependency:go-offline
+      
+      - name: Test
+        working-directory: api_backend/api_backend
+        run: mvn -B test
+
       - name: Build backend
         working-directory: api_backend/api_backend
-        run: mvn clean package -DskipTests
+        run: mvn -B clean package -DskipTests
 
       - name: Verify Lambda JAR
         working-directory: api_backend/api_backend
@@ -59,16 +68,17 @@ jobs:
 
       - name: Terraform Init
         working-directory: api_backend/api_backend/terraform
-        run: terraform init
+        run: terraform init -input=false
 
-      - name: Verify Terraform state
+      - name: Terraform Validate
         working-directory: api_backend/api_backend/terraform
-        run: terraform state list
+        run: terraform validate
 
       - name: Terraform Plan
         working-directory: api_backend/api_backend/terraform
-        run: terraform plan
+        run: terraform plan -input=false
 
-      - name: Terraform Apply
+      - name: Terraform Apply (Deploy Lambda)
+        if: github.event_name == 'push'
         working-directory: api_backend/api_backend/terraform
         run: terraform apply -auto-approve

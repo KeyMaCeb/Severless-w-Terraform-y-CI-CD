@@ -18,5 +18,5 @@ public interface UsuarioUseCase {
 
     void eliminar(Long id);
 
-    Usuario actualizarFoto(Long id, String fotoUrl);
+    Usuario actualizarFoto(Long id, String fotoUrl);;
 }

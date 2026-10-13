@@ -60,6 +60,10 @@ public class UsuarioService implements UsuarioUseCase {
         existente.setNombre(usuario.getNombre());
         existente.setEmail(usuario.getEmail());
 
+        if (usuario.getFotoUrl() != null) {
+            existente.setFotoUrl(usuario.getFotoUrl());
+        }
+
         return repository.guardar(existente);
     }
 
@@ -71,6 +75,7 @@ public class UsuarioService implements UsuarioUseCase {
         repository.eliminar(id);
     }
 
+    @Override
     public Usuario actualizarFoto(Long id, String fotoUrl) {
         Usuario existente = buscarPorId(id);
         existente.setFotoUrl(fotoUrl);

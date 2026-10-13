@@ -12,6 +12,9 @@ import 'viewmodel/dashboard_viewmodel.dart';
 import 'repository/upload_repository.dart';
 import 'services/upload_service.dart';
 import 'viewmodel/upload_viewmodel.dart';
+import 'repository/notification_repository.dart';
+import 'services/notification_service.dart';
+import 'viewmodel/notification_viewmodel.dart';
 
 void main() {
   ApiClient.init();
@@ -36,6 +39,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => UploadViewModel(UploadRepository(UploadService())),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NotificationViewModel(NotificationRepository(NotificationService())),
         ),
       ],
       child: MaterialApp(

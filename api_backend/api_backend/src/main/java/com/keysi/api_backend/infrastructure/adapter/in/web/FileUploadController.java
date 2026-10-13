@@ -30,9 +30,7 @@ public class FileUploadController {
         String url = uploadUseCase.subirArchivo(file);
 
         if (usuarioId != null) {
-            Usuario usuario = usuarioUseCase.buscarPorId(usuarioId);
-            usuario.setFotoUrl(url);
-            usuarioUseCase.actualizar(usuarioId, usuario);
+            usuarioUseCase.actualizarFoto(usuarioId, url);
         }
 
         return ResponseEntity.ok(Map.of("url", url));

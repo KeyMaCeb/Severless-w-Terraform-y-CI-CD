@@ -6,6 +6,8 @@ import '../viewmodel/usuario_viewmodel.dart';
 import 'login_screen.dart';
 import 'usuario_form_screen.dart';
 import 'dashboard_screen.dart';
+import '../services/api_client.dart';
+import 'notification_screen.dart';
 
 class UsuariosListScreen extends StatefulWidget {
   const UsuariosListScreen({super.key});
@@ -23,12 +25,30 @@ class _UsuariosListScreenState extends State<UsuariosListScreen> {
     });
   }
 
+  String? _urlFoto(String? fotoUrl, int version) {
+  if (fotoUrl == null || fotoUrl.isEmpty) return null;
+
+  final uri = Uri.parse(fotoUrl);
+  final base = uri.hasScheme
+      ? uri
+      : Uri.parse(ApiClient.dio.options.baseUrl).resolve(fotoUrl);
+
+  return base.replace(queryParameters: {
+    ...base.queryParameters,
+    'v': '$version',
+  }).toString();
+}
+
   Future<void> _cerrarSesion() async {
     await context.read<AuthViewModel>().logout();
+
     if (!mounted) return;
+
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(),
+      ),
     );
   }
 
@@ -89,9 +109,15 @@ class _UsuariosListScreenState extends State<UsuariosListScreen> {
           itemCount: vm.usuarios.length,
           itemBuilder: (_, i) {
             final u = vm.usuarios[i];
+            final foto = _urlFoto(u.fotoUrl, vm.fotoVersion);
+
             return ListTile(
               leading: CircleAvatar(
-                child: Text(u.nombre.isNotEmpty ? u.nombre[0].toUpperCase() : '?'),
+                key: ValueKey(foto),
+                backgroundImage: foto != null ? NetworkImage(foto) : null,
+                child: foto == null
+                    ? Text(u.nombre.isNotEmpty ? u.nombre[0].toUpperCase() : '?')
+                    : null,
               ),
               title: Text(u.nombre),
               subtitle: Text(u.email),
@@ -111,6 +137,14 @@ class _UsuariosListScreenState extends State<UsuariosListScreen> {
         title: const Text('Usuarios'),
         
       actions: [
+        IconButton(
+          icon: const Icon(Icons.mail_outline),
+          tooltip: 'Enviar correo',
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NotificationScreen()),
+          ),
+        ),
         IconButton(
           icon: const Icon(Icons.dashboard_outlined),
           tooltip: 'Dashboard',
