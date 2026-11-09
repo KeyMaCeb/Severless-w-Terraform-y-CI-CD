@@ -1,18 +1,20 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../models/upload_response.dart';
 import 'api_client.dart';
 
 class UploadService {
   Future<UploadResponse> subir(
-    File archivo,
+    Uint8List bytes,
+    String nombreArchivo,
     int usuarioId,
     void Function(double progreso) onProgress,
   ) async {
-    final nombreArchivo = archivo.path.split(Platform.pathSeparator).last;
-
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(archivo.path, filename: nombreArchivo),
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: nombreArchivo,
+      ),
       'usuarioId': usuarioId.toString(),
     });
 
@@ -20,7 +22,9 @@ class UploadService {
       '/upload',
       data: formData,
       onSendProgress: (enviado, total) {
-        if (total > 0) onProgress(enviado / total);
+        if (total > 0) {
+          onProgress(enviado / total);
+        }
       },
     );
 

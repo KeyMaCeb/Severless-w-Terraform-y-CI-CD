@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +22,8 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
   late final TextEditingController _emailCtrl;
   final _passCtrl = TextEditingController();
 
-  File? _archivoSeleccionado;
+  Uint8List? _imagenBytes;
+  String? _nombreArchivo;
 
   bool get _esEdicion => widget.usuario != null;
 
@@ -48,17 +49,26 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
   Future<void> _elegirImagen() async {
   try {
     final picker = ImagePicker();
+
     final XFile? imagen = await picker.pickImage(
-      source: ImageSource.gallery,   // <-- antes decía ImageSource.camera
+      source: ImageSource.gallery,
       imageQuality: 80,
     );
-    debugPrint('IMAGEN SELECCIONADA: ${imagen?.path}');
+
     if (imagen != null) {
-      setState(() => _archivoSeleccionado = File(imagen.path));
+      final bytes = await imagen.readAsBytes();
+
+      setState(() {
+        _imagenBytes = bytes;
+        _nombreArchivo = imagen.name;
+      });
+
+      debugPrint('IMAGEN SELECCIONADA: ${imagen.name}');
     }
   } catch (e, st) {
     debugPrint('ERROR AL ELEGIR IMAGEN: $e');
     debugPrint('$st');
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -68,25 +78,41 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
 }
 
   Future<void> _subirImagen() async {
-  debugPrint('SUBIR: archivo=${_archivoSeleccionado?.path} id=${widget.usuario?.id}');
-  if (_archivoSeleccionado == null || widget.usuario?.id == null) {
-    debugPrint('SUBIR: cancelado, falta archivo o id');
+  if (_imagenBytes == null ||
+      _nombreArchivo == null ||
+      widget.usuario?.id == null) {
     return;
   }
 
   final uploadVm = context.read<UploadViewModel>();
-  final ok = await uploadVm.subir(_archivoSeleccionado!, widget.usuario!.id!);
-  debugPrint('SUBIR: ok=$ok url=${uploadVm.urlSubida} error=${uploadVm.error}');
+
+  final ok = await uploadVm.subir(
+    _imagenBytes!,
+    _nombreArchivo!,
+    widget.usuario!.id!,
+  );
+
+  debugPrint(
+    'SUBIR: ok=$ok url=${uploadVm.urlSubida} error=${uploadVm.error}',
+  );
 
   if (!mounted) return;
+
   if (ok) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Imagen subida correctamente')),
     );
+
     final usuarioVm = context.read<UsuarioViewModel>();
+
     await usuarioVm.recargarTrasSubida();
+
     if (!mounted) return;
-    setState(() => _archivoSeleccionado = null);
+
+    setState(() {
+      _imagenBytes = null;
+      _nombreArchivo = null;
+    });
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(uploadVm.error ?? 'Error al subir')),
@@ -125,57 +151,66 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
     );
   }
 
-    Widget _previewFoto(Usuario? usuario, int version) {
-    if (_archivoSeleccionado != null) {
-      return Image.file(
-        _archivoSeleccionado!,
-        height: 150,
-        width: double.infinity,
-        fit: BoxFit.cover,
-      );
-    }
-
-    final fotoUrl = context.read<UploadViewModel>().urlSubida ?? usuario?.fotoUrl;
-
-    if (fotoUrl != null && fotoUrl.isNotEmpty) {
-      final uri = Uri.parse(fotoUrl);
-      final base = uri.hasScheme
-          ? uri
-          : Uri.parse(ApiClient.dio.options.baseUrl).resolve(fotoUrl);
-
-      // ?v=... fuerza a Flutter a descargar la imagen nueva
-      final url = base.replace(queryParameters: {
-        ...base.queryParameters,
-        'v': '$version',
-      }).toString();
-
-      debugPrint('FOTO URL FINAL: $url');
-
-      return Image.network(
-        url,
-        key: ValueKey(url),
-        height: 150,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, progress) => progress == null
-            ? child
-            : const SizedBox(
-                height: 150,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-        errorBuilder: (context, error, stackTrace) => const SizedBox(
-          height: 150,
-          child: Center(child: Icon(Icons.broken_image, size: 50)),
-        ),
-      );
-    }
-
-    return Container(
+Widget _previewFoto(Usuario? usuario, int version) {
+  if (_imagenBytes != null) {
+    return Image.memory(
+      _imagenBytes!,
       height: 150,
-      color: Colors.grey.shade200,
-      child: const Icon(Icons.person, size: 60, color: Colors.grey),
+      width: double.infinity,
+      fit: BoxFit.cover,
     );
   }
+
+  final fotoUrl =
+      context.read<UploadViewModel>().urlSubida ?? usuario?.fotoUrl;
+
+  if (fotoUrl != null && fotoUrl.isNotEmpty) {
+    final uri = Uri.parse(fotoUrl);
+
+    final base = uri.hasScheme
+        ? uri
+        : Uri.parse(ApiClient.dio.options.baseUrl).resolve(fotoUrl);
+
+    final url = base.replace(queryParameters: {
+      ...base.queryParameters,
+      'v': '$version',
+    }).toString();
+
+    return Image.network(
+      url,
+      key: ValueKey(url),
+      height: 150,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, progress) =>
+          progress == null
+              ? child
+              : const SizedBox(
+                  height: 150,
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+      errorBuilder: (context, error, stackTrace) =>
+          const SizedBox(
+            height: 150,
+            child: Center(
+              child: Icon(Icons.broken_image, size: 50),
+            ),
+          ),
+    );
+  }
+
+  return Container(
+    height: 150,
+    color: Colors.grey.shade200,
+    child: const Icon(
+      Icons.person,
+      size: 60,
+      color: Colors.grey,
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +237,7 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
                 icon: const Icon(Icons.image_outlined),
                 label: const Text('Elegir imagen'),
               ),
-              if (_archivoSeleccionado != null && _esEdicion) ...[
+              if (_imagenBytes != null && _esEdicion) ...[
                 const SizedBox(height: 8),
                 if (uploadVm.subiendo)
                   Column(
@@ -219,7 +254,7 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
                     label: const Text('Subir imagen'),
                   ),
               ],
-              if (_archivoSeleccionado != null && !_esEdicion)
+              if (_imagenBytes != null && !_esEdicion)
                 const Padding(
                   padding: EdgeInsets.only(top: 8),
                   child: Text(
