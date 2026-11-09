@@ -7,6 +7,10 @@ services:
       SPRING_DATASOURCE_USERNAME: neondb_owner
       SPRING_DATASOURCE_PASSWORD: npg_9kGDKMmCS2uj
       JWT_SECRET: EstaEsUnaClaveSecretaLargaParaMiApiBackend2026
+      AWS_REGION: us-east-2
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-dummy}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-dummy}
+      FILE_STORAGE_BUCKET: ${FILE_STORAGE_BUCKET:-local-uploads}
     ports:
       - "8080:8080"
     volumes:
