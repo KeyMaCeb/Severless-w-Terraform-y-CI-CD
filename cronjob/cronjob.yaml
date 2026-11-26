@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hola-cronjob
+spec:
+  schedule: "*/2 * * * *"
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: hola
+              image: busybox:1.36
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - date; echo "Hola desde Kubernetes (mod by KC)"

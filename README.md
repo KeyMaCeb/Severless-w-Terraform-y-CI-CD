@@ -1,7 +1,8 @@
-Backend y Frontend en Docker + Kubernetes
+**Backend y Frontend en Docker + Kubernetes**
 
 
-proyecto/
+
+**proyecto/**
 ├── api\_backend/api\_backend/   # Backend: Spring Boot + JWT + CRUD de usuarios + upload
 │   └── Dockerfile
 ├── appkc/                     # Frontend: app Flutter (compilada para web)
